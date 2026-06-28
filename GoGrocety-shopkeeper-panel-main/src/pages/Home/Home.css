@@ -1,0 +1,90 @@
+.homepage {
+  display: flex;
+  flex-direction: column;
+  padding: 2rem 4rem;
+  width: 100%;
+  text-align: center;
+}
+.btn-holder {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 1.4rem;
+  margin-left: 8rem;
+  margin-right: 8rem;
+}
+
+.btn-home {
+  border: none;
+  outline: none;
+  background-color: transparent;
+  font-size: 1.3rem;
+  padding: 6px 2.4rem;
+}
+
+.btn-active {
+  border-bottom: 2px solid #5ab2ff;
+}
+
+.home-heading {
+  font-size: 1.6rem;
+  margin-bottom: 1.4rem;
+}
+.signin-div {
+  padding: 0 auto;
+}
+input,
+.signin-btn,
+textarea,
+select {
+  width: 40%;
+  padding: 0.3rem 0.5rem;
+  font-size: 1rem;
+  margin-bottom: 1.4rem;
+  border-radius: 5px;
+  outline: none;
+  border: 1px solid #acacac;
+}
+
+.signin-btn {
+  border: 2px solid #1a8df1;
+}
+.signin-btn:hover {
+  background-color: #a0deff;
+}
+/* For WebKit-based browsers */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* For Firefox */
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+/* signup div css */
+.add-img-upload img {
+  width: 120px;
+}
+.signup p {
+  margin-bottom: 0.5rem;
+}
+.signup img {
+  margin-bottom: 1.4rem;
+}
+
+@media (max-width: 900px) {
+  .btn-holder {
+    margin-left: 0;
+    margin-right: 0;
+  }
+}
+
+@media (max-width: 660px) {
+  input,
+  .signin-btn,
+  textarea {
+    width: 100%;
+  }
+}

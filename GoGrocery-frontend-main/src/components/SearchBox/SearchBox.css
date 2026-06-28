@@ -1,0 +1,37 @@
+.search-box-container {
+  width: max(40%, 200px);
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: -30px;
+}
+
+.input-wrapper {
+  width: 100%;
+  border-radius: 10px;
+  height: 2.5rem;
+  padding: 0 15px;
+  box-shadow: 0 0 8px #ddd;
+  display: flex;
+  align-items: center;
+}
+
+.input-wrapper input {
+  border: none;
+  height: 100%;
+  width: 100%;
+  font-size: 1.25rem;
+  margin-right: 5px;
+  color: rgb(97, 97, 97);
+}
+
+.input-wrapper input:focus {
+  outline: none;
+}
+
+.input-wrapper img:hover {
+  cursor: pointer;
+}
+
+.input-wrapper:focus-within {
+  outline: 1px solid rgb(103, 211, 253);
+}
