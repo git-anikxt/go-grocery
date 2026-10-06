@@ -70,19 +70,17 @@ npm run dev
 
 Vite prints the local URLs. If both apps are running, they normally use ports `5173` and `5174`.
 
-The customer and shopkeeper apps use the hosted API by default. To use a local API, create `frontend/.env.local`:
+Both portals include a development environment file with the hosted API URL, so no Vite configuration is needed. After installing dependencies, start either portal with `npm run dev` from its folder.
+
+To point the customer portal at a local API instead, create `frontend/.env.development.local`:
 
 ```env
 VITE_API_URL=http://localhost:5000
 ```
 
-For payment testing, use matching Razorpay **test-mode** credentials in the backend and the public frontend key only if the API response does not supply it:
+To point the shopkeeper portal at a local API instead, create `GoGrocety-shopkeeper-panel-main/.env.development.local` with the same setting. These `.local` override files are ignored by Git.
 
-```env
-VITE_RAZORPAY_API_KEY=rzp_test_<your-public-key>
-```
-
-Restart Vite after changing frontend environment variables. Do not put the Razorpay secret in frontend variables.
+The customer development config includes the Razorpay **test public key** used when the hosted API does not return a public key. It is safe for client-side use; never put the Razorpay secret in frontend variables. Restart Vite after changing any environment variables.
 
 ## Build
 
