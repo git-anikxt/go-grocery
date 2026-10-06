@@ -5,8 +5,16 @@ import { instance } from "../server.js";
 // Placing User Order for Frontend
 const placeOrder = async (req, res) => {
   try {
+    const amount = Number(req.body.amount);
+    if (!Number.isFinite(amount) || amount <= 0) {
+      return res.status(400).json({ success: false, message: "Invalid order amount" });
+    }
+    if (!process.env.RAZORPAY_API_KEY || !process.env.RAZORPAY_API_SECRET) {
+      return res.status(503).json({ success: false, message: "Razorpay is not configured" });
+    }
+
     const options = {
-      amount: Number(req.body.amount) * 100, // amount in the smallest currency unit
+      amount: Math.round(amount * 100),
       currency: "INR",
     };
     const order = await instance.orders.create(options);
@@ -20,10 +28,10 @@ const placeOrder = async (req, res) => {
     });
     await newOrder.save();
 
-    res.json({ success: true, order });
+    res.json({ success: true, order, key: process.env.RAZORPAY_API_KEY });
   } catch (error) {
-    console.log(error);
-    res.json({ success: false, message: "Error" });
+    console.error("Failed to create Razorpay order:", error);
+    res.status(502).json({ success: false, message: "Unable to create payment order" });
   }
 };
 
@@ -77,6 +85,15 @@ const verifyOrder = async (req, res) => {
   const { razorpay_order_id, razorpay_payment_id, razorpay_signature } =
     req.body;
   try {
+    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+      return res.status(400).json({ success: false, message: "Missing payment verification details" });
+    }
+
+    const order = await orderModel.findOne({ orderId: razorpay_order_id });
+    if (!order) {
+      return res.status(404).json({ success: false, message: "Order not found" });
+    }
+
     const body = razorpay_order_id + "|" + razorpay_payment_id;
 
     const expectedSignature = crypto
@@ -84,28 +101,22 @@ const verifyOrder = async (req, res) => {
       .update(body.toString())
       .digest("hex");
 
-    const isAuthentic = expectedSignature === razorpay_signature;
-    const order = await orderModel.findOne({ orderId: razorpay_order_id });
-    if (isAuthentic) {
-      await orderModel.findByIdAndUpdate(order._id, {
-        payment: true,
-      });
-      await userModel.findOneAndUpdate(
-        { _id: order.userId },
-        { cartData: {} },
-        { useFindAndModify: false }
-      );
-      // res.redirect(`http://localhost:5173/myorders`);
-
-      res.redirect(`https://go-grocery-frontend.vercel.app/myorders`);
-    } else {
-      await orderModel.findByIdAndDelete(order._id);
-      res.json({ success: false, message: "Not Paid" });
+    const expected = Buffer.from(expectedSignature, "hex");
+    const received = Buffer.from(razorpay_signature, "hex");
+    if (
+      expected.length !== received.length ||
+      !crypto.timingSafeEqual(expected, received)
+    ) {
+      return res.status(400).json({ success: false, message: "Payment signature is invalid" });
     }
+
+    order.payment = true;
+    await order.save();
+    await userModel.findByIdAndUpdate(order.userId, { cartData: {} });
+    res.json({ success: true });
   } catch (error) {
-    const order = await orderModel.findOne({ orderId: razorpay_order_id });
-    await orderModel.findByIdAndDelete(order._id);
-    res.json({ success: false, message: "Not  Verified" });
+    console.error("Failed to verify Razorpay payment:", error);
+    res.status(500).json({ success: false, message: "Unable to verify payment" });
   }
 };
 const cancelPayment = async (req, res) => {
@@ -119,7 +130,10 @@ const cancelPayment = async (req, res) => {
     } else {
       res.status(404).send({ success: false, message: "Order not found" });
     }
-  } catch (error) {}
+  } catch (error) {
+    console.error("Failed to cancel payment order:", error);
+    res.status(500).json({ success: false, message: "Unable to cancel payment" });
+  }
 };
 
 export {

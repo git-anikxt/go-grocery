@@ -37,63 +37,79 @@ const PlaceOrder = () => {
 
   const placeOrder = async (e) => {
     e.preventDefault();
-    let orderItems = [];
-    itemList.map((item) => {
-      if (cartItems[item._id] > 0) {
-        let itemInfo = item;
-        itemInfo["quantity"] = cartItems[item._id];
-        orderItems.push(itemInfo);
+    try {
+      const orderItems = itemList
+        .filter((item) => cartItems[item._id] > 0)
+        .map((item) => ({ ...item, quantity: cartItems[item._id] }));
+      const orderData = {
+        address: data,
+        items: orderItems,
+        amount: getTotalCartAmount() + 50,
+      };
+      const response = await axios.post(url + "/api/order/place", orderData, {
+        headers: { token },
+      });
+      if (!response.data.success) {
+        throw new Error(response.data.message || "Unable to start payment");
       }
-    });
-    let orderData = {
-      address: data,
-      items: orderItems,
-      amount: getTotalCartAmount() + 50,
-    };
+      if (!window.Razorpay) {
+        throw new Error("Razorpay checkout did not load. Check your internet connection and retry.");
+      }
 
-    let response = await axios.post(url + "/api/order/place", orderData, {
-      headers: { token },
-    });
-    if (response.data.success) {
-      const order = response.data.order;
+      const { order } = response.data;
+      const key = response.data.key || import.meta.env.VITE_RAZORPAY_API_KEY;
+      if (!key) {
+        throw new Error("Razorpay is not configured. Set the public key in the frontend environment.");
+      }
       const options = {
-        key: import.meta.env.VITE_RAZORPAY_API_KEY,
+        key,
         amount: order.amount,
-        currency: "INR",
+        currency: order.currency,
         name: "GoGrocery",
-        description: "Test Transaction",
+        description: "Grocery order",
         image: assets.logo,
         order_id: order.id,
-        callback_url: `${url}/api/order/verify`,
         prefill: {
-          name: data.firstName + " " + data.lastName,
+          name: `${data.firstName} ${data.lastName}`,
           email: data.email,
           contact: data.phone,
-        },
-        notes: {
-          address: "Razorpay Corporate Office",
         },
         theme: {
           color: "#3399cc",
         },
-        modal: {
-          ondismiss: async function () {
-            const response = await axios.post(
-              url + "/api/order/cancelpayment",
-              { orderId: order.id }
+        handler: async (paymentResponse) => {
+          try {
+            const verification = await axios.post(
+              url + "/api/order/verify",
+              paymentResponse
             );
+            if (!verification.data.success) {
+              throw new Error(verification.data.message || "Payment verification failed");
+            }
+            setCartItems({});
+            navigate("/myorders");
+          } catch (error) {
+            toast.error(error.response?.data?.message || error.message || "Payment verification failed");
+          }
+        },
+        modal: {
+          ondismiss: async () => {
+            try {
+              await axios.post(url + "/api/order/cancelpayment", {
+                orderId: order.id,
+              });
+            } catch (error) {
+              toast.error(error.response?.data?.message || "Could not cancel pending order");
+            }
             window.removeEventListener("popstate", handleBackButton);
           },
         },
       };
 
-      // Add the event listener when the Razorpay modal is opened
       window.addEventListener("popstate", handleBackButton);
-
-      const razor = new window.Razorpay(options);
-      razor.open();
-    } else {
-      toast.error("Something Went Wrong");
+      new window.Razorpay(options).open();
+    } catch (error) {
+      toast.error(error.response?.data?.message || error.message || "Unable to start payment");
     }
   };
 

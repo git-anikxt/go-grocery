@@ -1,172 +1,97 @@
-# 🛒 Go Grocery
+# GoGrocery
 
-A full-stack grocery shopping platform built using the MERN Stack. The application allows customers to browse and purchase groceries online, while shopkeepers can efficiently manage inventory, products, and orders through a dedicated admin dashboard.
+GoGrocery is a grocery marketplace with a customer website, an Express/MongoDB API, and a shopkeeper dashboard.
 
----
+## Project layout
 
-## 🚀 Features
+- `frontend/` — customer-facing React/Vite website
+- `backend/` — Express API, MongoDB models, authentication, and Razorpay integration
+- `GoGrocety-shopkeeper-panel-main/` — shopkeeper React/Vite dashboard
 
-### 👤 Customer
-- User Registration & Login
-- Browse Grocery Products
-- Search & Filter Products
-- Add to Cart
-- Place Orders
-- Responsive User Interface
+## Requirements
 
-### 🏪 Shopkeeper
-- Secure Authentication
-- Add, Update & Delete Products
-- Manage Inventory
-- View Customer Orders
-- Dashboard for Store Management
+- Node.js 18 or newer
+- npm
+- A MongoDB database and Razorpay test credentials to run the backend/payment flow
 
-### ⚙ Backend
-- RESTful APIs
-- JWT Authentication
-- MongoDB Database Integration
-- CRUD Operations
-- Secure Route Protection
+## Install dependencies
 
----
+Run these commands from separate PowerShell terminals:
 
-## 🛠 Tech Stack
-
-### Frontend
-- React.js
-- JavaScript
-- HTML5
-- CSS3
-- Axios
-
-### Backend
-- Node.js
-- Express.js
-
-### Database
-- MongoDB
-- Mongoose
-
-### Authentication
-- JSON Web Token (JWT)
-
-### Tools
-- Git
-- GitHub
-- Postman
-- VS Code
-
----
-
-## 📂 Project Structure
-
-```
-go-grocery
-│
-├── GoGrocery-frontend-main
-│   ├── Customer UI
-│   ├── Product Pages
-│   ├── Cart
-│   └── Authentication
-│
-├── GoGrocery-backend-main
-│   ├── REST APIs
-│   ├── Database Models
-│   ├── Controllers
-│   ├── Routes
-│   └── JWT Authentication
-│
-└── GoGrocery-shopkeeper-panel-main
-    ├── Admin Dashboard
-    ├── Product Management
-    ├── Inventory Management
-    └── Order Management
-```
-
----
-
-## 📸 Screenshots
-
-You can add screenshots of:
-
-- Home Page
-- Product Listing
-- Shopping Cart
-- Login Page
-- Shopkeeper Dashboard
-- Product Management
-
----
-
-## ⚡ Installation
-
-### Clone Repository
-
-```bash
-git clone https://github.com/harshvdev27/go-grocery.git
-```
-
-### Backend
-
-```bash
-cd GoGrocery-backend-main
+```powershell
+cd backend
 npm install
-npm start
 ```
 
-### Frontend
-
-```bash
-cd GoGrocery-frontend-main
+```powershell
+cd frontend
 npm install
-npm start
 ```
 
-### Shopkeeper Panel
-
-```bash
-cd GoGrocery-shopkeeper-panel-main
+```powershell
+cd GoGrocety-shopkeeper-panel-main
 npm install
-npm start
 ```
 
----
+## Configure the backend
 
-## 🌐 Environment Variables
-
-Create a `.env` file inside the backend directory.
+Copy `backend/.env.example` to `backend/.env` and fill in your own values. Never commit `.env` or share its secrets.
 
 ```env
 PORT=5000
-
-MONGO_URI=Your_MongoDB_URI
-
-JWT_SECRET=Your_JWT_Secret
+MONGO=mongodb+srv://<username>:<password>@<cluster>/<database>?retryWrites=true&w=majority
+JWT_SECRET=<long-random-secret>
+RAZORPAY_API_KEY=rzp_test_<your-public-key>
+RAZORPAY_API_SECRET=<your-test-key-secret>
 ```
 
----
+Start the backend:
 
-## 📌 Future Improvements
+```powershell
+cd backend
+npm run dev
+```
 
-- Online Payment Integration
-- Email Notifications
-- Order Tracking
-- Product Reviews
-- Wishlist
-- Admin Analytics Dashboard
-- Image Upload using Cloudinary
+The API health check is available at `http://localhost:5000/`.
 
----
+## Run the applications
 
-## 👨‍💻 Author
+Start each app in its own terminal:
 
-**Harshvardhan**
+```powershell
+cd frontend
+npm run dev
+```
 
-- GitHub: https://github.com/harshvdev27
-- LinkedIn: Add your LinkedIn Profile
+```powershell
+cd GoGrocety-shopkeeper-panel-main
+npm run dev
+```
 
----
+Vite prints the local URLs. If both apps are running, they normally use ports `5173` and `5174`.
 
-## ⭐ Support
+The customer and shopkeeper apps use the hosted API by default. To use a local API, create `frontend/.env.local`:
 
-If you found this project useful, consider giving it a ⭐ on GitHub.
+```env
+VITE_API_URL=http://localhost:5000
+```
+
+For payment testing, use matching Razorpay **test-mode** credentials in the backend and the public frontend key only if the API response does not supply it:
+
+```env
+VITE_RAZORPAY_API_KEY=rzp_test_<your-public-key>
+```
+
+Restart Vite after changing frontend environment variables. Do not put the Razorpay secret in frontend variables.
+
+## Build
+
+```powershell
+cd frontend
+npm run build
+```
+
+```powershell
+cd GoGrocety-shopkeeper-panel-main
+npm run build
+```

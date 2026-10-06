@@ -44,14 +44,6 @@ const Navbar = ({ setShowLogin }) => {
           >
             stores
           </HashLink>
-          <HashLink
-            smooth
-            to="/#app-download"
-            onClick={() => setMenu("mob-app")}
-            className={`${menu === "mob-app" ? "active" : ""}`}
-          >
-            mobile app
-          </HashLink>
           <a
             href="#footer"
             onClick={() => setMenu("contact")}

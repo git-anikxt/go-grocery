@@ -12,7 +12,7 @@ import Razorpay from "razorpay";
 
 // app config
 const app = express();
-const port = process.env.PORT;
+const port = process.env.PORT || 5000;
 
 export const instance = new Razorpay({
   key_id: process.env.RAZORPAY_API_KEY,
@@ -21,11 +21,8 @@ export const instance = new Razorpay({
 
 // middlewares
 app.use(express.json());
-app.use(express.urlencoded());
+app.use(express.urlencoded({ extended: true }));
 app.use(cors());
-
-// db connection
-connectDB();
 
 // api endpoints
 app.use("/api/user", userRouter);
@@ -39,6 +36,13 @@ app.use("/api/item", itemRouter);
 app.get("/", (req, res) => {
   res.send("API Working");
 });
+
+try {
+  await connectDB();
+} catch (error) {
+  console.error("Backend startup failed because the database connection failed:", error);
+  process.exit(1);
+}
 
 app.listen(port, () =>
   console.log(`Server started on http://localhost:${port}`)
