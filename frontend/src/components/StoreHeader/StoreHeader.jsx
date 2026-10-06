@@ -3,6 +3,7 @@ import "./StoreHeader.css";
 import { StoreContext } from "../../Context/StoreContext";
 import axios from "axios";
 import { toast } from "react-toastify";
+import { assets } from "../../assets/assets";
 
 const StoreHeader = ({ id }) => {
   const { url } = useContext(StoreContext);
@@ -30,6 +31,9 @@ const StoreHeader = ({ id }) => {
         <img
           className="store-logo"
           src={url + "/images/" + storeInfo.image}
+          onError={(event) => {
+            event.currentTarget.src = assets.logo;
+          }}
           alt=""
         />
       </div>

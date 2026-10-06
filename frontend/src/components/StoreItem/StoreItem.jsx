@@ -14,6 +14,9 @@ const StoreItem = ({ image, name, price, desc, id, discount }) => {
         <img
           className="store-item-image"
           src={url + "/images/" + image}
+          onError={(event) => {
+            event.currentTarget.src = assets.logo;
+          }}
           alt=""
         />
         {!cartItems[id] ? (

@@ -1,4 +1,4 @@
-import { createContext, useEffect, useState } from "react";
+import { createContext, useCallback, useEffect, useState } from "react";
 import { stores_types } from "../assets/assets";
 import axios from "axios";
 export const StoreContext = createContext(null);
@@ -8,6 +8,7 @@ const StoreContextProvider = (props) => {
     import.meta.env.VITE_API_URL || "https://gogrocery-backend.onrender.com";
   const [itemList, setItemList] = useState([]);
   const [shopkeeper_list, setShopkeeperList] = useState([]);
+  const [catalogStatus, setCatalogStatus] = useState("loading");
   const [cartItems, setCartItems] = useState({});
   const [token, setToken] = useState("");
   const [searchResults, setSearchResults] = useState([]);
@@ -49,6 +50,9 @@ const StoreContextProvider = (props) => {
     for (const item in cartItems) {
       if (cartItems[item] > 0) {
         let itemInfo = itemList.find((product) => product._id === item);
+        if (!itemInfo) {
+          continue;
+        }
         totalAmount +=
           ((itemInfo.price * (100 - itemInfo.discount)) / 100).toFixed(2) *
           cartItems[item];
@@ -57,16 +61,51 @@ const StoreContextProvider = (props) => {
     return totalAmount;
   };
 
-  const fetchItemsList = async () => {
-    const response = await axios.get(url + "/api/item/getAllItems");
-    setItemList(response.data.items);
-  };
-  const fetchShopkeeperList = async () => {
-    const response = await axios.post(url + "/api/shopkeeper/shopkeeperList", {
-      postalCode: "201301",
-    });
-    setShopkeeperList(response.data.shopkeepers);
-  };
+  const refreshCatalog = useCallback(async () => {
+    try {
+      const [storesResponse, itemsResponse] = await Promise.all([
+        axios.post(url + "/api/shopkeeper/shopkeeperList", {
+          postalCode: "201301",
+        }),
+        axios.get(url + "/api/item/getAllItems"),
+      ]);
+
+      if (!storesResponse.data.success || !itemsResponse.data.success) {
+        throw new Error("The catalog API returned an unsuccessful response");
+      }
+
+      const items = itemsResponse.data.items;
+      const storesById = new Map(
+        storesResponse.data.shopkeepers.map((store) => [store._id, store])
+      );
+      const itemOwnerIds = [
+        ...new Set(items.map((item) => item.userId).filter(Boolean)),
+      ];
+      const missingStoreIds = itemOwnerIds.filter(
+        (ownerId) => !storesById.has(ownerId)
+      );
+      const additionalStores = await Promise.all(
+        missingStoreIds.map(async (ownerId) => {
+          const response = await axios.get(`${url}/api/store/${ownerId}`);
+          if (!response.data.success) {
+            throw new Error(
+              response.data.message || `Unable to load store ${ownerId}`
+            );
+          }
+          return response.data.shopkeeper;
+        })
+      );
+
+      additionalStores.forEach((store) => storesById.set(store._id, store));
+      setShopkeeperList([...storesById.values()]);
+      setItemList(items);
+      setCatalogStatus("ready");
+    } catch (error) {
+      setCatalogStatus("error");
+      console.error("Failed to refresh stores and items:", error);
+      throw error;
+    }
+  }, [url]);
 
   const loadCartData = async (token) => {
     const response = await axios.post(
@@ -115,21 +154,43 @@ const StoreContextProvider = (props) => {
   };
 
   useEffect(() => {
+    let isActive = true;
+    const refreshIfActive = () => {
+      if (isActive && document.visibilityState === "visible") {
+        refreshCatalog().catch(() => {});
+      }
+    };
+
     async function loadData() {
       showUserLatLng();
-      await fetchShopkeeperList();
-      await fetchItemsList();
+      refreshCatalog().catch(() => {});
       if (localStorage.getItem("gogrocerytoken")) {
-        setToken(localStorage.getItem("gogrocerytoken"));
-        await loadCartData({ token: localStorage.getItem("gogrocerytoken") });
+        const savedToken = localStorage.getItem("gogrocerytoken");
+        setToken(savedToken);
+        try {
+          await loadCartData({ token: savedToken });
+        } catch (error) {
+          console.error("Failed to load cart:", error);
+        }
       }
     }
     loadData();
-  }, []);
+
+    const refreshInterval = window.setInterval(refreshIfActive, 15000);
+    window.addEventListener("focus", refreshIfActive);
+    document.addEventListener("visibilitychange", refreshIfActive);
+    return () => {
+      isActive = false;
+      window.clearInterval(refreshInterval);
+      window.removeEventListener("focus", refreshIfActive);
+      document.removeEventListener("visibilitychange", refreshIfActive);
+    };
+  }, [refreshCatalog]);
 
   const contextValue = {
     url,
     shopkeeper_list,
+    catalogStatus,
     stores_types,
     cartItems,
     itemList,
@@ -142,6 +203,7 @@ const StoreContextProvider = (props) => {
     setCartItems,
     searchResults,
     setSearchResults,
+    refreshCatalog,
   };
 
   return (

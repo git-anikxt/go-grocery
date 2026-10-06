@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useContext } from "react";
+import React, { useCallback, useEffect, useState, useContext } from "react";
 import "./List.css";
 import "../../assets/assets";
 import axios from "axios";
@@ -16,18 +16,26 @@ const List = () => {
 
   const [list, setList] = useState([]);
 
-  const fetchList = async () => {
-    const response = await axios.get(`${url}/api/shopkeeper/list`, {
-      headers: {
-        token: `${token}`,
-      },
-    });
-    if (response.data.success) {
-      setList(response.data.items);
-    } else {
-      toast.error("Error");
+  const fetchList = useCallback(async (authToken = token) => {
+    if (!authToken) {
+      return;
     }
-  };
+
+    try {
+      const response = await axios.get(`${url}/api/shopkeeper/list`, {
+        headers: {
+          token: authToken,
+        },
+      });
+      if (response.data.success) {
+        setList(response.data.items);
+      } else {
+        toast.error(response.data.message || "Unable to load your items");
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Unable to load your items");
+    }
+  }, [token, url]);
 
   const removeFood = async (foodId) => {
     const response = await axios.post(`${url}/api/shopkeeper/remove`, {
@@ -46,13 +54,14 @@ const List = () => {
   };
 
   useEffect(() => {
-    if (!localStorage.getItem("shopkeepertoken")) {
+    const savedToken = localStorage.getItem("shopkeepertoken");
+    if (!savedToken) {
       navigate("/");
     } else {
-      setToken(localStorage.getItem("shopkeepertoken"));
+      setToken(savedToken);
+      fetchList(savedToken);
     }
-    fetchList();
-  }, []);
+  }, [fetchList, navigate, setToken]);
 
   return (
     <>

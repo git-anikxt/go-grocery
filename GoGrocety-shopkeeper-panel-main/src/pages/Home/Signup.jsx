@@ -170,7 +170,7 @@ const Signup = () => {
           <select name="category" onChange={onChangeHandler}>
             <option value="Grocery & Essentials">Grocery & Essentials</option>
             <option value="Health & Wellness">Health & Wellness</option>
-            <option value="Fruites & Vegetables">Fruits & Vegetables</option>
+            <option value="Fruits & Vegetables">Fruits & Vegetables</option>
             <option value="Dry Fruits & Nuts">Dry Fruits & Nuts</option>
             <option value="Dairy Products">Dairy Products</option>
           </select>

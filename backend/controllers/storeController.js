@@ -6,7 +6,9 @@ const getShopkeeperDetails = async (req, res) => {
   const { id } = req.params;
 
   try {
-    const shopkeeper = await shopkeeperModel.findById(id);
+    const shopkeeper = await shopkeeperModel
+      .findById(id)
+      .select("shopName shopkeeperName category shopAddress openTime closeTime image");
     if (shopkeeper) {
       return res.json({ success: true, shopkeeper });
     } else {

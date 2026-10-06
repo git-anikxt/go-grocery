@@ -1,10 +1,9 @@
-import { createContext, useEffect, useState } from "react";
-import axios from "axios";
+import { createContext, useState } from "react";
 export const StoreContext = createContext(null);
 
 const StoreContextProvider = (props) => {
-  // const url = "http://localhost:4000";
-  const url = "https://gogrocery-backend.onrender.com";
+  const url =
+    import.meta.env.VITE_API_URL || "https://gogrocery-backend.onrender.com";
 
   const [token, setToken] = useState("");
   const [editForm, setEditForm] = useState(null);

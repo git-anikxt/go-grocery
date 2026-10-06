@@ -33,7 +33,14 @@ const Store = ({
   return (
     <div className="store" onClick={() => handleStoreClick(id)}>
       <div className="store-img-container">
-        <img className="store-image" src={url + "/images/" + image} alt="" />
+        <img
+          className="store-image"
+          src={url + "/images/" + image}
+          onError={(event) => {
+            event.currentTarget.src = assets.logo;
+          }}
+          alt=""
+        />
         <p className="discount-lable">Discount upto: {highestDiscount}%</p>
       </div>
       <div className="store-info">
